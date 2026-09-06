@@ -10,6 +10,7 @@ a = Analysis(
     datas=[
         ('templates', 'templates'),   # recognition template images
         ('assets', 'assets'),         # logo
+        ('tools', 'tools'),           # calibrate script (run in-process when frozen)
     ],
     hiddenimports=[],
     hookspath=[],

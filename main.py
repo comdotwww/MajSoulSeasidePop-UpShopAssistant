@@ -502,8 +502,18 @@ class App:
     def calibrate(self):
         self.root.withdraw()
         try:
-            import subprocess
-            subprocess.call([sys.executable, os.path.join(APP_DIR, "calibrate.py")])
+            if getattr(sys, "frozen", False):
+                # 打包后不能用 subprocess：sys.executable 是 exe 本身，把它当 python
+                # 调用会再启动一个程序实例（抢注 F8/F9 热键）。改为进程内执行校准脚本。
+                import importlib.util
+                path = os.path.join(vision.BASE_DIR, "tools", "calibrate.py")
+                spec = importlib.util.spec_from_file_location("shop_calibrate", path)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                mod.main()
+            else:
+                import subprocess
+                subprocess.call([sys.executable, os.path.join(APP_DIR, "tools", "calibrate.py")])
             self.cfg = load_config()
             r = self.cfg.get("region")
             if r:
