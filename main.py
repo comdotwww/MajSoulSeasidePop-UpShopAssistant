@@ -504,13 +504,17 @@ class App:
         try:
             if getattr(sys, "frozen", False):
                 # 打包后不能用 subprocess：sys.executable 是 exe 本身，把它当 python
-                # 调用会再启动一个程序实例（抢注 F8/F9 热键）。改为进程内执行校准脚本。
+                # 调用会再启动一个程序实例（抢注 F8/F9 热键）。
+                # 也不能在进程内再建第二个 tk.Tk()（嵌套解释器会在框选结束后
+                # 卡死主窗口事件循环）。改为在同一解释器里创建 Toplevel 遮罩，
+                # 并显式传入 exe 目录的 config.json（calibrate.py 的 __file__
+                # 在 _MEIPASS 临时目录里，默认路径会写错位置）。
                 import importlib.util
                 path = os.path.join(vision.BASE_DIR, "tools", "calibrate.py")
                 spec = importlib.util.spec_from_file_location("shop_calibrate", path)
                 mod = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(mod)
-                mod.main()
+                mod.main(config_path=CONFIG_PATH, parent=self.root)
             else:
                 import subprocess
                 subprocess.call([sys.executable, os.path.join(APP_DIR, "tools", "calibrate.py")])
