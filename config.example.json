@@ -1,0 +1,9 @@
+{
+  "region": null,
+  "drag_duration": 0.45,
+  "loop_interval": 0.3,
+  "collect_interval": 6.0,
+  "room_cycle": true,
+  "room_cycle_interval": 20.0,
+  "any_match": false
+}
