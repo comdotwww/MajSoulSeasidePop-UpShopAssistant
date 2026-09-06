@@ -475,15 +475,19 @@ def find_collect_button(img):
 
 _END_SCALE_KEY = "end_business"
 
+# ------- 游戏语言（主程序界面选择，决定加载哪套按钮模板） -------
+GAME_LANG = "cn"  # "cn"=简体中文 | "jp"=日语
+_END_TMPLS = {"cn": ("end_business",), "jp": ("end_business_jp",)}
+_START_TMPLS = {"cn": ("start_biz_home", "start_biz_prep"),
+                "jp": ("start_biz_home_jp", "start_biz_prep_jp")}
+
 
 def find_end_business(img):
     """检测『结束营业』按钮（游戏结束结账界面，出现即本局已结束）。
     按钮位于底部中央；只在底部中央 ROI 半分辨率下匹配（真命中实测得分 0.97，
     阈值 0.85 余量充足），命中后回原分辨率局部窗口确认。单次 ~10ms。
+    按所选游戏语言加载对应模板（中文/日语各一套）。
     命中返回 (cx, cy)，未命中返回 None。"""
-    tmpl = load_template("end_business")
-    if tmpl is None:
-        return None
     h, w = img.shape[:2]
     x0, x1 = int(w * 0.25), int(w * 0.75)
     y0, y1 = int(h * 0.70), h
@@ -499,27 +503,31 @@ def find_end_business(img):
     if cached is not None:
         scales = (cached,) + tuple(s for s in scales if s != cached)
 
-    for s in scales:
-        coarse = _match_at_scale(small, tmpl, s * 0.5, 0.85)
-        if not coarse:
+    for tname in _END_TMPLS.get(GAME_LANG, _END_TMPLS["cn"]):
+        tmpl = load_template(tname)
+        if tmpl is None:
             continue
-        # 半分辨率命中 -> 原分辨率局部窗口确认（防误报）
-        t2 = cv2.resize(tmpl, (int(tmpl.shape[1] * s), int(tmpl.shape[0] * s)),
-                        interpolation=cv2.INTER_AREA)
-        for ccx, ccy, _, _ in coarse[:2]:
-            fx, fy = ccx * 2, ccy * 2
-            wx0 = max(0, fx - t2.shape[1] // 2 - 24)
-            wy0 = max(0, fy - t2.shape[0] // 2 - 24)
-            wx1 = min(roi.shape[1], fx + t2.shape[1] // 2 + 24)
-            wy1 = min(roi.shape[0], fy + t2.shape[0] // 2 + 24)
-            if wx1 - wx0 < t2.shape[1] or wy1 - wy0 < t2.shape[0]:
+        for s in scales:
+            coarse = _match_at_scale(small, tmpl, s * 0.5, 0.85)
+            if not coarse:
                 continue
-            res2 = cv2.matchTemplate(roi[wy0:wy1, wx0:wx1], t2, cv2.TM_CCOEFF_NORMED)
-            _, mx, _, mxl = cv2.minMaxLoc(res2)
-            if mx >= 0.80:
-                _SCALE_CACHE[_END_SCALE_KEY] = s
-                return (wx0 + mxl[0] + t2.shape[1] // 2 + x0,
-                        wy0 + mxl[1] + t2.shape[0] // 2 + y0)
+            # 半分辨率命中 -> 原分辨率局部窗口确认（防误报）
+            t2 = cv2.resize(tmpl, (int(tmpl.shape[1] * s), int(tmpl.shape[0] * s)),
+                            interpolation=cv2.INTER_AREA)
+            for ccx, ccy, _, _ in coarse[:2]:
+                fx, fy = ccx * 2, ccy * 2
+                wx0 = max(0, fx - t2.shape[1] // 2 - 24)
+                wy0 = max(0, fy - t2.shape[0] // 2 - 24)
+                wx1 = min(roi.shape[1], fx + t2.shape[1] // 2 + 24)
+                wy1 = min(roi.shape[0], fy + t2.shape[0] // 2 + 24)
+                if wx1 - wx0 < t2.shape[1] or wy1 - wy0 < t2.shape[0]:
+                    continue
+                res2 = cv2.matchTemplate(roi[wy0:wy1, wx0:wx1], t2, cv2.TM_CCOEFF_NORMED)
+                _, mx, _, mxl = cv2.minMaxLoc(res2)
+                if mx >= 0.80:
+                    _SCALE_CACHE[_END_SCALE_KEY] = s
+                    return (wx0 + mxl[0] + t2.shape[1] // 2 + x0,
+                            wy0 + mxl[1] + t2.shape[0] // 2 + y0)
     return None
 
 
@@ -537,7 +545,7 @@ def find_start_business(img):
     scales = tuple(sorted({round(rel, 3), round(rel * 0.95, 3), round(rel * 1.05, 3)}))
 
     best = None  # (cx, cy, score, name)
-    for name in ("start_biz_home", "start_biz_prep"):
+    for name in _START_TMPLS.get(GAME_LANG, _START_TMPLS["cn"]):
         tmpl = load_template(name)
         if tmpl is None:
             continue

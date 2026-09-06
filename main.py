@@ -4,7 +4,7 @@
 功能：
   1. 把顾客区的顾客拖到匹配的空桌上
   2. 定时点击右下角『收集场内所有金币』
-  3. 可选：自动轮流切换 铜/银/金 房间
+  3. 可选：自动轮流切换 铜/银/金 房间 
 """
 import json
 import os
@@ -412,6 +412,7 @@ class App:
 
     def __init__(self):
         self.cfg = load_config()
+        vision.GAME_LANG = self.cfg.get("game_lang", "cn")  # 按钮识别模板语言（中文/日语）
         self.worker = None
         self.root = tk.Tk()
         self.root.title("店铺助理")
@@ -451,13 +452,22 @@ class App:
         tk.Checkbutton(frame, text="任意匹配模式（有空位就放，不做标签匹配）", variable=self.any_var,
                        command=self._toggle_any, font=("Microsoft YaHei", 9)).grid(row=2, column=0, columnspan=2, sticky="w", **pad)
 
+        # 游戏语言：决定「结束营业 / 开始营业」按钮识别模板（中日两套，界面不同）
+        self.lang_var = tk.StringVar(value=self.cfg.get("game_lang", "cn"))
+        lang_frame = tk.Frame(frame)
+        lang_frame.grid(row=3, column=0, columnspan=2, sticky="w", **pad)
+        tk.Label(lang_frame, text="游戏语言：", font=("Microsoft YaHei", 9)).pack(side="left")
+        for val, label in (("cn", "简体中文"), ("jp", "日本語")):
+            tk.Radiobutton(lang_frame, text=label, value=val, variable=self.lang_var,
+                           command=self._toggle_lang, font=("Microsoft YaHei", 9)).pack(side="left")
+
         self.calib_btn = tk.Button(frame, text="框选游戏区域", width=27,
                                    font=("Microsoft YaHei", 9), command=self.calibrate)
-        self.calib_btn.grid(row=3, column=0, columnspan=2, **pad)
+        self.calib_btn.grid(row=4, column=0, columnspan=2, **pad)
 
         # 实时日志框（只读，按行动态刷新，自动滚动到底部）
         log_frame = tk.Frame(frame)
-        log_frame.grid(row=4, column=0, columnspan=2, padx=8, pady=(2, 8), sticky="we")
+        log_frame.grid(row=5, column=0, columnspan=2, padx=8, pady=(2, 8), sticky="we")
         self.log_box = tk.Text(log_frame, height=12, width=48, wrap="char",
                                font=("Microsoft YaHei", 9), state="disabled",
                                bg="#fafafa", fg="#333", relief="solid", bd=1)
@@ -498,6 +508,13 @@ class App:
         save_config(self.cfg)
         if self.cfg["any_match"]:
             self._log("⚡ 任意匹配模式：有空位就放，不做标签匹配")
+
+    def _toggle_lang(self):
+        self.cfg["game_lang"] = self.lang_var.get()
+        save_config(self.cfg)
+        vision.GAME_LANG = self.cfg["game_lang"]
+        self._log("🌐 游戏语言：" + ("日本語（営業終了/営業開始 模板）" if self.cfg["game_lang"] == "jp"
+                                else "简体中文（结束营业/开始营业 模板）"))
 
     def calibrate(self):
         self.root.withdraw()
