@@ -5,8 +5,8 @@ import os
 import sys
 import time
 
-APP_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, APP_DIR)
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 仓库根目录
+sys.path.insert(0, ROOT)
 
 from main import Worker, mss_fullscreen
 
@@ -17,7 +17,7 @@ def log(msg):
     print("[助理]", msg)
 
 
-with open(os.path.join(APP_DIR, "config.json"), encoding="utf-8") as f:
+with open(os.path.join(ROOT, "config.json"), encoding="utf-8") as f:
     cfg = json.load(f)
 
 w = Worker(cfg, log)

@@ -15,8 +15,8 @@ import os
 import sys
 import time
 
-APP_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, APP_DIR)
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 仓库根目录
+sys.path.insert(0, ROOT)
 
 import cv2
 import numpy as np
@@ -25,10 +25,10 @@ import mss
 import actions
 import vision
 
-OUT = os.path.join(APP_DIR, "_test_shots")
+OUT = os.path.join(ROOT, "_test_shots")
 os.makedirs(OUT, exist_ok=True)
 
-with open(os.path.join(APP_DIR, "config.json"), encoding="utf-8") as f:
+with open(os.path.join(ROOT, "config.json"), encoding="utf-8") as f:
     cfg = json.load(f)
 region = cfg.get("region")
 

@@ -24,7 +24,7 @@ import cv2
 import numpy as np
 import mss
 
-APP_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 仓库根目录
 
 
 def main():
@@ -69,7 +69,7 @@ def main():
             return
         crop = img[y0:y1, x0:x1]
         ok, buf = cv2.imencode(".png", crop)
-        path = os.path.join(APP_DIR, "templates", name + ".png")
+        path = os.path.join(ROOT, "templates", name + ".png")
         buf.tofile(path)
         print("已保存模板:", path)
         root.destroy()

@@ -4,7 +4,8 @@ import cv2
 import numpy as np
 import os
 
-TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 仓库根目录
+TEMPLATES_DIR = os.path.join(ROOT, "templates")
 GLYPH_W, GLYPH_H = 24, 32
 
 # 每张截图三个门的数字文本（铜/银/金）
@@ -48,8 +49,8 @@ def norm_glyph(img_mask, box):
 def main():
     saved = {}
     for f, texts in LABELS.items():
-        path = os.path.join(os.path.dirname(TEMPLATES_DIR), "..", f)
-        path = os.path.normpath(os.path.join(os.path.dirname(TEMPLATES_DIR), "..", f))
+        # 样本截图在仓库上级目录（游戏助理/1.png 等）
+        path = os.path.normpath(os.path.join(ROOT, "..", f))
         img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
         h, w = img.shape[:2]
         for rx, text in zip(DOOR_RX, texts):

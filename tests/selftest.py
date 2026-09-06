@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """自测：用参考截图验证各识别函数"""
 import sys, os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # 仓库根目录
 import cv2
 import numpy as np
 import vision
